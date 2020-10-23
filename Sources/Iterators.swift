@@ -22,11 +22,27 @@ public struct Iterator {
         let _ = context?.evaluateScript(rrulejs)
         return context
     }()
+    
+    internal static let nplContext: JSContext? = {
+        guard let rrulejs = JavaScriptBridge.nlpjs() else {
+            return nil
+        }
+        let context = JSContext()
+        context?.exceptionHandler = { context, exception in
+            print("[RRuleSwift] nlp.js error: \(String(describing: exception))")
+        }
+        let _ = context?.evaluateScript(rrulejs)
+        return context
+    }()
 }
 
 public extension RecurrenceRule {
     func allOccurrences(endless endlessRecurrenceCount: Int = Iterator.endlessRecurrenceCount) -> [Date] {
         guard let _ = JavaScriptBridge.rrulejs() else {
+            return []
+        }
+        
+        guard let _ = JavaScriptBridge.nlpjs() else {
             return []
         }
 
@@ -54,6 +70,19 @@ public extension RecurrenceRule {
         }
 
         return occurrences.sorted { $0.isBeforeOrSame(with: $1) }
+    }
+    
+    func getText(endless endlessRecurrenceCount: Int = Iterator.endlessRecurrenceCount) -> String {
+        guard let _ = JavaScriptBridge.rrulejs() else {
+            return ""
+        }
+
+        let ruleJSONString = toJSONString(endless: endlessRecurrenceCount)
+        let _ = Iterator.rruleContext?.evaluateScript("var rule = new RRule({ \(ruleJSONString) })")
+        guard let text = Iterator.rruleContext?.evaluateScript("rule.toText()")?.toString() else {
+            return ""
+        }
+        return text
     }
 
     func occurrences(between date: Date, and otherDate: Date, endless endlessRecurrenceCount: Int = Iterator.endlessRecurrenceCount) -> [Date] {

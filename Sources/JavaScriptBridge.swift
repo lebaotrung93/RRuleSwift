@@ -22,6 +22,19 @@ internal struct JavaScriptBridge {
             return nil
         }
     }
+    
+    internal static func nlpjs() -> String? {
+        let libPath = Bundle(identifier: "Teambition.RRuleSwift-iOS")?.path(forResource: "nlp", ofType: "js") ?? Bundle.main.path(forResource: "nlp", ofType: "js")
+        guard let rrulelibPath = libPath else {
+            return nil
+        }
+
+        do {
+            return try String(contentsOfFile: rrulelibPath)
+        } catch _ {
+            return nil
+        }
+    }
 }
 
 internal extension RecurrenceFrequency {
